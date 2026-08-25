@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="fr" dir="ltr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#111827" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Stock Salon" />
+  <title>Stock Salon</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+  <style>
+    :root{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;color:#111827;background:#f6f7fb}
+    *{box-sizing:border-box} body{margin:0;min-height:100vh;background:#f6f7fb}
+    header{position:sticky;top:0;z-index:10;background:#111827;color:#fff;padding:calc(14px + env(safe-area-inset-top)) 16px 14px;box-shadow:0 2px 10px #0002}
+    .head{max-width:720px;margin:auto;display:flex;align-items:center;gap:12px}.brand{font-size:20px;font-weight:800;flex:1}.lang{display:flex;gap:6px}.lang button{border:1px solid #ffffff55;background:#ffffff14;color:#fff;padding:7px 10px;border-radius:10px;font-weight:700}.lang button.active{background:#fff;color:#111827}
+    main{max-width:720px;margin:auto;padding:16px 16px calc(28px + env(safe-area-inset-bottom))}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.card,.panel{background:#fff;border-radius:18px;box-shadow:0 5px 18px #11182712;border:1px solid #e5e7eb}.card{padding:22px 12px;text-align:center;font-weight:800;font-size:17px;min-height:116px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:8px}.emoji{font-size:31px}.panel{padding:16px;margin-top:14px}.panel h2{margin:0 0 14px;font-size:21px}.muted{color:#6b7280;font-size:14px}.row{display:flex;gap:10px;align-items:center}.row>*{min-width:0}.row .grow{flex:1}
+    input,select,button,textarea{font:inherit}input,select{width:100%;border:1px solid #d1d5db;border-radius:12px;padding:12px;background:#fff;font-size:16px}label{display:block;font-weight:700;font-size:13px;margin:12px 0 6px}.btn{border:0;border-radius:12px;padding:12px 14px;font-weight:800;background:#111827;color:white}.btn.secondary{background:#e5e7eb;color:#111827}.btn.good{background:#047857}.btn.bad{background:#b91c1c}.btn.full{width:100%}.actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}.hidden{display:none!important}
+    .product{padding:12px 0;border-top:1px solid #e5e7eb}.product:first-child{border-top:0}.pname{font-weight:800}.stock{font-size:22px;font-weight:900}.low{color:#b91c1c}.tag{display:inline-block;font-size:12px;background:#eef2ff;border-radius:999px;padding:4px 8px;margin-top:5px}.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}.toolbar .btn{padding:9px 11px}.empty{text-align:center;color:#6b7280;padding:24px}
+    video{width:100%;background:#000;border-radius:14px;max-height:350px}.scanline{font-size:13px;color:#6b7280;margin-top:8px}.qtybox{display:grid;grid-template-columns:56px 1fr 56px;gap:8px;align-items:center}.qtybox button{font-size:24px;padding:8px}.number{text-align:center;font-size:24px;font-weight:900}.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translateX(-50%);background:#111827;color:#fff;padding:12px 16px;border-radius:12px;opacity:0;pointer-events:none;transition:.2s;z-index:99;max-width:90%;text-align:center}.toast.show{opacity:1}
+    [dir="rtl"] body,[dir="rtl"] input,[dir="rtl"] select{text-align:right}
+    @media(min-width:600px){.grid{grid-template-columns:repeat(4,1fr)}.card{min-height:130px}}
+  </style>
+</head>
+<body>
+<header><div class="head"><div class="brand" data-i18n="title">Stock Salon</div><div class="lang"><button id="frBtn">FR</button><button id="heBtn">עברית</button></div></div></header>
+<main>
+  <section id="home">
+    <div class="grid">
+      <button class="card" data-go="scan"><span class="emoji">📷</span><span data-i18n="scan">Scanner</span></button>
+      <button class="card" data-go="inventory"><span class="emoji">📋</span><span data-i18n="inventory">Inventaire</span></button>
+      <button class="card" data-go="stock"><span class="emoji">📦</span><span data-i18n="stock">Stock</span></button>
+      <button class="card" data-go="moves"><span class="emoji">↕️</span><span data-i18n="moves">Mouvements</span></button>
+    </div>
+    <div class="panel">
+      <div class="row"><div class="grow"><strong data-i18n="summary">Résumé</strong><div class="muted" id="summaryText"></div></div><button class="btn secondary" id="exportBtn" data-i18n="export">Exporter CSV</button></div>
+    </div>
+  </section>
+
+  <section id="scan" class="hidden panel">
+    <div class="row"><button class="btn secondary back">←</button><h2 class="grow" data-i18n="scanProduct">Scanner un produit</h2></div>
+    <video id="video" playsinline muted></video>
+    <div class="scanline" id="scanStatus" data-i18n="cameraHelp">Autorisez la caméra, puis placez le code-barres dans l’image.</div>
+    <div class="actions"><button class="btn" id="startScan" data-i18n="startCamera">Démarrer la caméra</button><button class="btn secondary" id="stopScan" data-i18n="stopCamera">Arrêter</button></div>
+    <label data-i18n="barcodeManual">Ou saisir le code-barres</label><div class="row"><input id="manualCode" inputmode="numeric" autocomplete="off" placeholder="EAN / UPC"><button class="btn" id="manualFind" data-i18n="ok">OK</button></div>
+  </section>
+
+  <section id="product" class="hidden panel">
+    <div class="row"><button class="btn secondary backHome">←</button><h2 class="grow" data-i18n="product">Produit</h2></div>
+    <div id="productKnown" class="hidden">
+      <div class="pname" id="prodName"></div><div class="muted" id="prodMeta"></div><div style="margin-top:10px"><span data-i18n="currentStock">Stock actuel</span> : <span class="stock" id="prodStock"></span></div>
+      <label data-i18n="quantity">Quantité</label><div class="qtybox"><button class="btn secondary" id="qtyMinus">−</button><div class="number" id="qtyNum">1</div><button class="btn secondary" id="qtyPlus">+</button></div>
+      <div class="actions"><button class="btn good" id="inBtn" data-i18n="entry">+ Entrée</button><button class="btn bad" id="outBtn" data-i18n="exit">− Sortie</button></div>
+      <button class="btn secondary full" id="setBtn" style="margin-top:10px" data-i18n="setInventory">Définir quantité inventaire</button>
+    </div>
+    <div id="productNew" class="hidden">
+      <div class="muted" data-i18n="unknown">Produit inconnu : créez sa fiche.</div>
+      <label data-i18n="barcode">Code-barres</label><input id="newCode" readonly>
+      <label data-i18n="name">Nom du produit</label><input id="newName">
+      <label data-i18n="brand">Marque</label><input id="newBrand">
+      <label data-i18n="category">Catégorie</label><select id="newCategory"><option>Coloration</option><option>Shampooing</option><option>Soin</option><option>Beauté</option><option>Matériel</option><option>Autre</option></select>
+      <label data-i18n="initialStock">Stock initial</label><input id="newStock" type="number" min="0" step="1" value="0">
+      <label data-i18n="lowThreshold">Seuil d'alerte</label><input id="newLow" type="number" min="0" step="1" value="2">
+      <button class="btn full" id="createBtn" style="margin-top:14px" data-i18n="create">Créer le produit</button>
+    </div>
+  </section>
+
+  <section id="inventory" class="hidden panel">
+    <div class="row"><button class="btn secondary back">←</button><h2 class="grow" data-i18n="inventory">Inventaire</h2></div>
+    <p class="muted" data-i18n="inventoryHelp">Scannez chaque produit puis indiquez la quantité réellement présente. Le stock sera remplacé par cette quantité.</p>
+    <button class="btn full" id="inventoryScan" data-i18n="scanNext">Scanner le prochain produit</button>
+  </section>
+
+  <section id="stock" class="hidden panel">
+    <div class="row"><button class="btn secondary back">←</button><h2 class="grow" data-i18n="stock">Stock</h2></div>
+    <input id="search" type="search" data-i18n-placeholder="search" placeholder="Rechercher produit, marque, code…">
+    <div class="toolbar"><button class="btn secondary" id="allFilter" data-i18n="all">Tous</button><button class="btn secondary" id="lowFilter" data-i18n="lowStock">Stock faible</button></div>
+    <div id="stockList"></div>
+  </section>
+
+  <section id="moves" class="hidden panel">
+    <div class="row"><button class="btn secondary back">←</button><h2 class="grow" data-i18n="moves">Mouvements</h2></div>
+    <div id="movesList"></div>
+  </section>
+</main>
+<div class="toast" id="toast"></div>
+<script>
+const T={fr:{title:'Stock Salon',scan:'Scanner',inventory:'Inventaire',stock:'Stock',moves:'Mouvements',summary:'Résumé',export:'Exporter CSV',scanProduct:'Scanner un produit',cameraHelp:"Autorisez la caméra, puis placez le code-barres dans l’image.",startCamera:'Démarrer la caméra',stopCamera:'Arrêter',barcodeManual:'Ou saisir le code-barres',ok:'OK',product:'Produit',currentStock:'Stock actuel',quantity:'Quantité',entry:'+ Entrée',exit:'− Sortie',setInventory:'Définir quantité inventaire',unknown:'Produit inconnu : créez sa fiche.',barcode:'Code-barres',name:'Nom du produit',brand:'Marque',category:'Catégorie',initialStock:'Stock initial',lowThreshold:"Seuil d'alerte",create:'Créer le produit',inventoryHelp:'Scannez chaque produit puis indiquez la quantité réellement présente. Le stock sera remplacé par cette quantité.',scanNext:'Scanner le prochain produit',search:'Rechercher produit, marque, code…',all:'Tous',lowStock:'Stock faible',products:'produits',units:'unités',alerts:'alertes',created:'Produit créé',updated:'Stock mis à jour',cameraUnsupported:"Le scan automatique n'est pas disponible dans ce navigateur. Saisissez le code-barres manuellement.",cameraDenied:"Impossible d'accéder à la caméra. Vérifiez l'autorisation caméra.",notFound:'Aucun produit',inventoryPrompt:'Quantité réellement présente',movementIn:'Entrée',movementOut:'Sortie',movementSet:'Inventaire',confirmNegative:'Stock insuffisant pour cette sortie.',csvDone:'Export CSV créé'},he:{title:'מלאי מספרה',scan:'סריקה',inventory:'ספירת מלאי',stock:'מלאי',moves:'תנועות',summary:'סיכום',export:'ייצוא CSV',scanProduct:'סריקת מוצר',cameraHelp:'יש לאשר גישה למצלמה ולמקם את הברקוד בתמונה.',startCamera:'הפעלת מצלמה',stopCamera:'עצירה',barcodeManual:'או הזנת ברקוד',ok:'אישור',product:'מוצר',currentStock:'מלאי נוכחי',quantity:'כמות',entry:'+ כניסה',exit:'− יציאה',setInventory:'קביעת כמות בספירת מלאי',unknown:'מוצר לא מוכר: יש ליצור כרטיס מוצר.',barcode:'ברקוד',name:'שם המוצר',brand:'מותג',category:'קטגוריה',initialStock:'מלאי התחלתי',lowThreshold:'סף התראה',create:'יצירת מוצר',inventoryHelp:'סרקו כל מוצר והזינו את הכמות הקיימת בפועל. המלאי יוחלף בכמות זו.',scanNext:'סריקת המוצר הבא',search:'חיפוש מוצר, מותג או ברקוד…',all:'הכול',lowStock:'מלאי נמוך',products:'מוצרים',units:'יחידות',alerts:'התראות',created:'המוצר נוצר',updated:'המלאי עודכן',cameraUnsupported:'סריקה אוטומטית אינה זמינה בדפדפן זה. ניתן להזין את הברקוד ידנית.',cameraDenied:'לא ניתן לגשת למצלמה. יש לבדוק את הרשאת המצלמה.',notFound:'לא נמצאו מוצרים',inventoryPrompt:'כמות בפועל',movementIn:'כניסה',movementOut:'יציאה',movementSet:'ספירת מלאי',confirmNegative:'אין מספיק מלאי ליציאה זו.',csvDone:'קובץ CSV נוצר'}};
+let lang=localStorage.getItem('ss_lang')||'fr', products=JSON.parse(localStorage.getItem('ss_products')||'[]'), moves=JSON.parse(localStorage.getItem('ss_moves')||'[]'), current=null, qty=1, stream=null, scanTimer=null, inventoryMode=false;
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+function save(){localStorage.setItem('ss_products',JSON.stringify(products));localStorage.setItem('ss_moves',JSON.stringify(moves));renderSummary();}
+function tr(k){return T[lang][k]||k}
+function applyLang(){document.documentElement.lang=lang;document.documentElement.dir=lang==='he'?'rtl':'ltr';$$('[data-i18n]').forEach(e=>e.textContent=tr(e.dataset.i18n));$$('[data-i18n-placeholder]').forEach(e=>e.placeholder=tr(e.dataset.i18nPlaceholder));$('#frBtn').classList.toggle('active',lang==='fr');$('#heBtn').classList.toggle('active',lang==='he');localStorage.setItem('ss_lang',lang);renderSummary();renderStock();renderMoves();}
+function show(id){['home','scan','product','inventory','stock','moves'].forEach(x=>$('#'+x).classList.toggle('hidden',x!==id));if(id!=='scan') stopScanner();if(id==='stock')renderStock();if(id==='moves')renderMoves();}
+function toast(s){const e=$('#toast');e.textContent=s;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),1800)}
+function renderSummary(){const units=products.reduce((a,p)=>a+Number(p.stock||0),0), alerts=products.filter(p=>Number(p.stock)<=Number(p.low||0)).length;$('#summaryText').textContent=`${products.length} ${tr('products')} · ${units} ${tr('units')} · ${alerts} ${tr('alerts')}`}
+function openCode(code){code=String(code||'').trim();if(!code)return;current=products.find(p=>p.code===code)||null;show('product');if(current){$('#productKnown').classList.remove('hidden');$('#productNew').classList.add('hidden');$('#prodName').textContent=current.name;$('#prodMeta').textContent=[current.brand,current.category,current.code].filter(Boolean).join(' · ');$('#prodStock').textContent=current.stock;qty=1;$('#qtyNum').textContent=qty}else{$('#productKnown').classList.add('hidden');$('#productNew').classList.remove('hidden');$('#newCode').value=code;$('#newName').value='';$('#newBrand').value='';$('#newStock').value=0;$('#newLow').value=2}}
+function move(type,amount,newValue){if(!current)return;const before=Number(current.stock||0);if(type==='out'&&amount>before){toast(tr('confirmNegative'));return}if(type==='set')current.stock=Number(newValue);else current.stock=before+(type==='in'?amount:-amount);moves.unshift({ts:new Date().toISOString(),code:current.code,name:current.name,type,qty:type==='set'?Number(newValue):Number(amount),before,after:current.stock});save();$('#prodStock').textContent=current.stock;toast(tr('updated'));if(inventoryMode){setTimeout(()=>show('inventory'),400)}}
+function renderStock(filter='all'){const q=($('#search')?.value||'').toLowerCase();let arr=products.filter(p=>[p.name,p.brand,p.code,p.category].join(' ').toLowerCase().includes(q));if(filter==='low')arr=arr.filter(p=>Number(p.stock)<=Number(p.low||0));const box=$('#stockList');if(!arr.length){box.innerHTML=`<div class="empty">${tr('notFound')}</div>`;return}box.innerHTML=arr.sort((a,b)=>a.name.localeCompare(b.name)).map(p=>`<div class="product" data-code="${p.code}"><div class="row"><div class="grow"><div class="pname">${esc(p.name)}</div><div class="muted">${esc([p.brand,p.category,p.code].filter(Boolean).join(' · '))}</div></div><div class="stock ${Number(p.stock)<=Number(p.low||0)?'low':''}">${p.stock}</div></div></div>`).join('');$$('#stockList .product').forEach(e=>e.onclick=()=>openCode(e.dataset.code))}
+function renderMoves(){const box=$('#movesList');if(!moves.length){box.innerHTML=`<div class="empty">—</div>`;return}box.innerHTML=moves.slice(0,200).map(m=>{const label=m.type==='in'?tr('movementIn'):m.type==='out'?tr('movementOut'):tr('movementSet');const d=new Date(m.ts).toLocaleString(lang==='he'?'he-IL':'fr-FR');return `<div class="product"><div class="row"><div class="grow"><div class="pname">${esc(m.name)}</div><div class="muted">${d} · ${esc(label)}</div></div><div><strong>${m.before} → ${m.after}</strong></div></div></div>`}).join('')}
+function esc(s){return String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+async function startScanner(){if(!navigator.mediaDevices?.getUserMedia){toast(tr('cameraUnsupported'));return}try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false});$('#video').srcObject=stream;await $('#video').play();if(!('BarcodeDetector' in window)){toast(tr('cameraUnsupported'));return}const formats=await BarcodeDetector.getSupportedFormats();const detector=new BarcodeDetector({formats:formats.filter(x=>['ean_13','ean_8','upc_a','upc_e','code_128','code_39','itf'].includes(x))});scanTimer=setInterval(async()=>{try{const codes=await detector.detect($('#video'));if(codes.length){const v=codes[0].rawValue;stopScanner();openCode(v)}}catch(e){}},450)}catch(e){toast(tr('cameraDenied'))}}
+function stopScanner(){if(scanTimer){clearInterval(scanTimer);scanTimer=null}if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}if($('#video'))$('#video').srcObject=null}
+function exportCSV(){const rows=[['code','name','brand','category','stock','low_threshold'],...products.map(p=>[p.code,p.name,p.brand,p.category,p.stock,p.low])];const csv='\ufeff'+rows.map(r=>r.map(v=>'"'+String(v??'').replaceAll('"','""')+'"').join(';')).join('\n');const blob=new Blob([csv],{type:'text/csv;charset=utf-8'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='stock-salon-'+new Date().toISOString().slice(0,10)+'.csv';a.click();URL.revokeObjectURL(a.href);toast(tr('csvDone'))}
+$$('[data-go]').forEach(b=>b.onclick=()=>{inventoryMode=false;show(b.dataset.go)});$$('.back').forEach(b=>b.onclick=()=>show('home'));$$('.backHome').forEach(b=>b.onclick=()=>show(inventoryMode?'inventory':'home'));$('#frBtn').onclick=()=>{lang='fr';applyLang()};$('#heBtn').onclick=()=>{lang='he';applyLang()};$('#startScan').onclick=startScanner;$('#stopScan').onclick=stopScanner;$('#manualFind').onclick=()=>openCode($('#manualCode').value);$('#manualCode').addEventListener('keydown',e=>{if(e.key==='Enter')openCode(e.target.value)});$('#qtyMinus').onclick=()=>{$('#qtyNum').textContent=qty=Math.max(1,qty-1)};$('#qtyPlus').onclick=()=>{$('#qtyNum').textContent=++qty};$('#inBtn').onclick=()=>move('in',qty);$('#outBtn').onclick=()=>move('out',qty);$('#setBtn').onclick=()=>{const v=prompt(tr('inventoryPrompt'),current.stock);if(v!==null&&v!==''&&!isNaN(v)&&Number(v)>=0)move('set',0,Number(v))};$('#createBtn').onclick=()=>{const name=$('#newName').value.trim();if(!name)return;const p={code:$('#newCode').value.trim(),name,brand:$('#newBrand').value.trim(),category:$('#newCategory').value,stock:Number($('#newStock').value||0),low:Number($('#newLow').value||0)};products.push(p);current=p;moves.unshift({ts:new Date().toISOString(),code:p.code,name:p.name,type:'set',qty:p.stock,before:0,after:p.stock});save();toast(tr('created'));openCode(p.code)};$('#inventoryScan').onclick=()=>{inventoryMode=true;show('scan')};$('#search').oninput=()=>renderStock(window.stockFilter||'all');$('#allFilter').onclick=()=>{window.stockFilter='all';renderStock('all')};$('#lowFilter').onclick=()=>{window.stockFilter='low';renderStock('low')};$('#exportBtn').onclick=exportCSV;
+if('serviceWorker' in navigator && location.protocol!=='file:')navigator.serviceWorker.register('./sw.js').catch(()=>{});
+applyLang();show('home');
+</script>
+</body>
+</html>
